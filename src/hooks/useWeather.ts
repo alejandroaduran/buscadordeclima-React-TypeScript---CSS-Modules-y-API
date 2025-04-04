@@ -1,5 +1,5 @@
 import axios from "axios"
-import { z } from "zod"
+import { set, z } from "zod"
 //import { object, string, number, InferOutput, parse } from "valibot"
 import { SearchType } from "../types"
 import { useMemo, useState } from "react"
@@ -57,6 +57,8 @@ export default function useWeather() {
 
     const [loading, setLoading] = useState(false)
 
+    const [notFound, setNotFound] = useState(false)
+
     const fetchWeather = async (search: SearchType) => {
         // Fetch weather data from API
         //console.log('Fetching weather data...')
@@ -65,8 +67,15 @@ export default function useWeather() {
         setWeather(initialState)
         try {
 
-            const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${search.city},${search.country}&appid=${appId}`
+            const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${search.city},${search.country}&appid=${appId}`
             const { data } = await axios.get(geoUrl)
+
+            //Comprobar si existe
+            if(!data[0]) {
+                console.log("No hay datos")
+                setNotFound(true)
+                return
+            }
 
             const lat = data[0].lat
             const lon = data[0].lon
@@ -85,6 +94,7 @@ export default function useWeather() {
             const result = Weather.safeParse(weatherResult)
             if (result.success) {
                 setWeather(result.data)
+                setNotFound(false)
             }
             console.log(result)
 
@@ -107,7 +117,8 @@ export default function useWeather() {
         weather,
         fetchWeather,
         hasWeatherData,
-        loading
+        loading,
+        notFound
     }
 
 }
